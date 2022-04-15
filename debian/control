@@ -3,7 +3,7 @@ Maintainer: Valery Tschopp <valery.tschopp@switch.ch>
 Section: misc
 Priority: optional
 Standards-Version: 3.9.8
-Build-Depends: debhelper (>= 9), dh-python, python:any
+Build-Depends: debhelper (>= 9), dh-python
 
 Package: nagios-plugins-ceph
 Architecture: all
