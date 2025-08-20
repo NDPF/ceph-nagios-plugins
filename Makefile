@@ -81,4 +81,10 @@ docker-build:
 	apt-get --no-install-recommends --yes install build-essential fakeroot devscripts python debhelper dh-python" | docker build -t ceph-nagios-plugins-builder -
 	docker run -v $(CURDIR):/opt ceph-nagios-plugins-builder /bin/bash -c "cd /opt; make deb; make deb-src"
 
+# A dotenv file for use in gitlab pipelines, see
+# https://docs.gitlab.com/ci/variables/#pass-an-environment-variable-to-another-job
+build.env: Makefile
+	echo NAME=$(NAME) > $@
+	echo VERSION=$(VERSION) >> $@
+
 # vim: set noexpandtab:
