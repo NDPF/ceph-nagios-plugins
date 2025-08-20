@@ -16,7 +16,7 @@
 #  limitations under the License.
 #
 
-from __future__ import print_function
+
 import argparse
 import os
 import subprocess
@@ -100,14 +100,18 @@ STATUS_UNKNOWN = 3
 
 def main():
     # parse args
-    parser = argparse.ArgumentParser(description="'ceph mgr dump' nagios plugin.")
+    parser = argparse.ArgumentParser(
+        description="'ceph mgr dump' nagios plugin.")
     parser.add_argument('-e', '--exe', help='ceph executable [%s]' % CEPH_EXEC)
     parser.add_argument('-c', '--conf', help='alternative ceph conf file')
-    parser.add_argument('-m', '--monaddress', help='ceph monitor to use for queries (address[:port])')
+    parser.add_argument(
+        '-m', '--monaddress',
+        help='ceph monitor to use for queries (address[:port])')
     parser.add_argument('-i', '--id', help='ceph client id')
     parser.add_argument('-n', '--name', help='ceph client name')
     parser.add_argument('-k', '--keyring', help='ceph client keyring file')
-    parser.add_argument('-V', '--version', help='show version and exit', action='store_true')
+    parser.add_argument('-V', '--version', help='show version and exit',
+                        action='store_true')
     args = parser.parse_args()
 
     if args.version:
@@ -148,7 +152,9 @@ def main():
     ceph_cmd.extend(CEPH_COMMAND.split(' '))
 
     # exec command
-    p = subprocess.Popen(ceph_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p = subprocess.Popen(ceph_cmd,
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE)
     output, err = p.communicate()
 
     if p.returncode != 0 or not output:
@@ -160,7 +166,9 @@ def main():
     try:
         mgr_dump = json.loads(output)
     except Exception as e:
-        print("MGR ERROR: could not parse '{}' output: {}: {}".format(ceph_cmd, output, e))
+        print("MGR ERROR: could not parse '{}' output: {}: {}".format(ceph_cmd,
+                                                                      output,
+                                                                      e))
         return STATUS_UNKNOWN
 
     # check active
@@ -179,9 +187,11 @@ def main():
         print("MGR WARN: active: {} but no standbys".format(active_mgr_name))
         return STATUS_WARNING
     else:
-        print("MGR OK: active: {}, standbys: {}".format(active_mgr_name,
-                                                        ", ".join(standby_mgr_names)))
+        print("MGR OK: active: {}, standbys: {}".format(
+            active_mgr_name,
+            ", ".join(standby_mgr_names)))
         return STATUS_OK
+
 
 # main
 if __name__ == "__main__":

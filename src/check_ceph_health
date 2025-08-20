@@ -16,7 +16,7 @@
 #  limitations under the License.
 #
 
-from __future__ import print_function
+
 import argparse
 import os
 import subprocess
@@ -40,22 +40,34 @@ STATUS_UNKNOWN = 3
 def main():
 
     # parse args
-    parser = argparse.ArgumentParser(description="'ceph health' nagios plugin.")
-    parser.add_argument('-e','--exe', help='ceph executable [%s]' % CEPH_COMMAND)
-    parser.add_argument('-A','--admexe', help='cephadm executable [%s]' % CEPH_ADM_COMMAND)
+    parser = argparse.ArgumentParser(
+        description="'ceph health' nagios plugin.")
+    parser.add_argument('-e', '--exe',
+                        help='ceph executable [%s]' % CEPH_COMMAND)
+    parser.add_argument('-A', '--admexe',
+                        help='cephadm executable [%s]' % CEPH_ADM_COMMAND)
     parser.add_argument('--cluster', help='ceph cluster name')
-    parser.add_argument('-c','--conf', help='alternative ceph conf file')
-    parser.add_argument('-m','--monaddress', help='ceph monitor address[:port]')
-    parser.add_argument('-i','--id', help='ceph client id')
-    parser.add_argument('-n','--name', help='ceph client name')
-    parser.add_argument('-k','--keyring', help='ceph client keyring file')
-    parser.add_argument('--check', help='regexp of which check(s) to check (luminous+) '
-                        "Can be inverted, e.g. '^((?!(PG_DEGRADED|OBJECT_MISPLACED)$).)*$'")
-    parser.add_argument('-w','--whitelist', help='whitelist regexp for ceph health warnings')
-    parser.add_argument('-d','--detail', help="exec 'ceph health detail'", action='store_true')
-    parser.add_argument('-V','--version', help='show version and exit', action='store_true')
-    parser.add_argument('-a','--cephadm', help='uses cephadm to execute the command', action='store_true')
-    parser.add_argument('-s','--skip-muted', help='skip muted checks', action='store_true')
+    parser.add_argument('-c', '--conf', help='alternative ceph conf file')
+    parser.add_argument('-m', '--monaddress',
+                        help='ceph monitor address[:port]')
+    parser.add_argument('-i', '--id', help='ceph client id')
+    parser.add_argument('-n', '--name', help='ceph client name')
+    parser.add_argument('-k', '--keyring', help='ceph client keyring file')
+    parser.add_argument(
+        '--check',
+        help='regexp of which check(s) to check (luminous+) '
+        "Can be inverted, e.g. '^((?!(PG_DEGRADED|OBJECT_MISPLACED)$).)*$'")
+    parser.add_argument('-w', '--whitelist',
+                        help='whitelist regexp for ceph health warnings')
+    parser.add_argument('-d', '--detail',
+                        help="exec 'ceph health detail'", action='store_true')
+    parser.add_argument('-V', '--version',
+                        help='show version and exit', action='store_true')
+    parser.add_argument('-a', '--cephadm',
+                        help='uses cephadm to execute the command',
+                        action='store_true')
+    parser.add_argument('-s', '--skip-muted',
+                        help='skip muted checks', action='store_true')
     args = parser.parse_args()
 
     # validate args
@@ -64,7 +76,8 @@ def main():
 
     if args.cephadm:
         if not os.path.exists(cephadm_exec):
-            print("ERROR: cephadm executable '%s' doesn't exist" % cephadm_exec)
+            print("ERROR: cephadm executable '%s' doesn't exist" %
+                  cephadm_exec)
             return STATUS_UNKNOWN
     else:
         if not os.path.exists(ceph_exec):
@@ -114,10 +127,11 @@ def main():
 
     ceph_health.append('--format')
     ceph_health.append('json')
-    #print(ceph_health)
+    # print(ceph_health)
 
     # exec command
-    p = subprocess.Popen(ceph_health,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    p = subprocess.Popen(ceph_health,
+                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output, err = p.communicate()
     try:
         output = json.loads(output)
@@ -126,22 +140,23 @@ def main():
 
     # parse output
     # print "output:", output
-    #print "err:", err
+    # print "err:", err
     if output:
         ret = STATUS_OK
         msg = ""
         extended = []
         if 'checks' in output:
-            #luminous
-            for check,status in output['checks'].items():
-                 # skip check if not selected
+            # luminous
+            for check, status in list(output['checks'].items()):
+                # skip check if not selected
                 if args.check and not re.search(args.check, check):
                     continue
 
                 if args.skip_muted and ('muted' in status and status['muted']):
                     continue
 
-                check_detail = "%s( %s )" % (check, status['summary']['message'])
+                check_detail = "%s( %s )" % (check,
+                                             status['summary']['message'])
 
                 if status["severity"] == "HEALTH_ERR":
                     extended.append(msg)
@@ -149,7 +164,8 @@ def main():
                     ret = STATUS_ERROR
                     continue
 
-                if args.whitelist and re.search(args.whitelist,status['summary']['message']):
+                if args.whitelist and re.search(args.whitelist,
+                                                status['summary']['message']):
                     continue
 
                 check_msg = "WARNING: %s" % check_detail
@@ -159,30 +175,31 @@ def main():
                 else:
                     extended.append(check_msg)
         else:
-            #pre-luminous
+            # pre-luminous
             for status in output["summary"]:
                 if status != "HEALTH_OK":
-                  if status == "HEALTH_ERROR":
-                      msg = "CRITICAL: %s" % status['summary']
-                      ret = STATUS_ERROR
-                      continue
+                    if status == "HEALTH_ERROR":
+                        msg = "CRITICAL: %s" % status['summary']
+                        ret = STATUS_ERROR
+                        continue
 
-                  if args.whitelist and re.search(args.whitelist,status['summary']):
-                      continue
+                    if args.whitelist and re.search(args.whitelist,
+                                                    status['summary']):
+                        continue
 
-                  if not msg:
-                      msg = "WARNING: %s" % status['summary']
-                      ret = STATUS_WARNING
-                  else:
-                     extended.append("WARNING: %s" % status['summary'])
+                    if not msg:
+                        msg = "WARNING: %s" % status['summary']
+                        ret = STATUS_WARNING
+                    else:
+                        extended.append("WARNING: %s" % status['summary'])
 
         if msg:
             print(msg)
         else:
             print("HEALTH OK")
-        if extended: print('\n'.join(extended))
+        if extended:
+            print('\n'.join(extended))
         return ret
-
 
     elif err:
         # read only first line of error

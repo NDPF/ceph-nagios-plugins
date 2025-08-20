@@ -23,7 +23,7 @@
 #  limitations under the License.
 #
 
-from __future__ import print_function
+
 import argparse
 import os
 import subprocess
@@ -43,19 +43,21 @@ STATUS_WARNING = 1
 STATUS_ERROR = 2
 STATUS_UNKNOWN = 3
 
+
 def main():
 
     # parse args
     parser = argparse.ArgumentParser(description="'ceph osd df' nagios plugin.")
-    parser.add_argument('-e','--exe', help='ceph executable [%s]' % CEPH_COMMAND)
-    parser.add_argument('-c','--conf', help='alternative ceph conf file')
-    parser.add_argument('-m','--monaddress', help='ceph monitor address[:port]')
-    parser.add_argument('-i','--id', help='ceph client id')
-    parser.add_argument('-n','--name', help='ceph client name')
-    parser.add_argument('-k','--keyring', help='ceph client keyring file')
-    parser.add_argument('-W','--warn', help="warn above this percent USED", type=float)
-    parser.add_argument('-C','--critical', help="critical alert above this percent USED", type=float)
-    parser.add_argument('-V','--version', help='show version and exit', action='store_true')
+    parser.add_argument('-e', '--exe', help='ceph executable [%s]' % CEPH_COMMAND)
+    parser.add_argument('-c', '--conf', help='alternative ceph conf file')
+    parser.add_argument('-m', '--monaddress', help='ceph monitor address[:port]')
+    parser.add_argument('-i', '--id', help='ceph client id')
+    parser.add_argument('-n', '--name', help='ceph client name')
+    parser.add_argument('-k', '--keyring', help='ceph client keyring file')
+    parser.add_argument('-W', '--warn', help="warn above this percent USED", type=float)
+    parser.add_argument('-C', '--critical',
+                        help="critical alert above this percent USED", type=float)
+    parser.add_argument('-V', '--version', help='show version and exit', action='store_true')
     args = parser.parse_args()
 
     # validate args
@@ -102,7 +104,7 @@ def main():
     ceph_osd_df.append('--format=json')
 
     # exec command
-    p = subprocess.Popen(ceph_osd_df,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    p = subprocess.Popen(ceph_osd_df, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output, err = p.communicate()
 
     # parse output
@@ -113,7 +115,7 @@ def main():
         try:
             result = json.loads(output)
             check_return_value = STATUS_OK
-            nodes_sorted = sorted(result["nodes"], key=itemgetter('utilization','id'))
+            nodes_sorted = sorted(result["nodes"], key=itemgetter('utilization', 'id'))
 
             warn_crit_osds = []
 
@@ -130,12 +132,14 @@ def main():
                 print("OK: All OSDs within limits")
                 return STATUS_OK
             elif check_return_value == STATUS_WARNING:
-                print("WARNING: OSD usage above warn threshold: {:.4054}".format(", ".join(warn_crit_osds)))
+                print("WARNING: OSD usage above warn threshold: {:.4054}".format(
+                    ", ".join(warn_crit_osds)))
                 return STATUS_WARNING
             elif check_return_value == STATUS_ERROR:
-                print("CRITICAL: OSD usage above critical or warn threshold: {:.4041}".format(", ".join(warn_crit_osds)))
+                print("CRITICAL: OSD usage above critical or warn threshold: {:.4041}".format(
+                    ", ".join(warn_crit_osds)))
                 return STATUS_ERROR
-        except:
+        except Exception:
             print("ERROR: {}".format(sys.exc_info()[0]))
             return STATUS_UNKNOWN
     elif err:
@@ -148,6 +152,7 @@ def main():
             print(one_line)
 
     return STATUS_UNKNOWN
+
 
 if __name__ == "__main__":
     sys.exit(main())

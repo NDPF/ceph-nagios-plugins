@@ -17,11 +17,10 @@
 #  limitations under the License.
 
 
-from __future__ import print_function
 import argparse
-import socket
+# import socket
 import os
-import re
+# import re
 import subprocess
 import sys
 import json
@@ -38,17 +37,23 @@ STATUS_WARNING = 1
 STATUS_ERROR = 2
 STATUS_UNKNOWN = 3
 
+
 def main():
     # parse args
-    parser = argparse.ArgumentParser(description="'ceph mds stat' nagios plugin.")
-    parser.add_argument('-e','--exe', help='ceph executable [%s]' % CEPH_EXEC)
-    parser.add_argument('-c','--conf', help='alternative ceph conf file')
-    parser.add_argument('-m','--monaddress', help='ceph monitor to use for queries (address[:port])')
-    parser.add_argument('-i','--id', help='ceph client id')
-    parser.add_argument('-k','--keyring', help='ceph client keyring file')
-    parser.add_argument('-V','--version', help='show version and exit', action='store_true')
-    parser.add_argument('-n','--name', help='mds daemon name', required=True)
-    parser.add_argument('-f','--filesystem', help='mds filesystem name', required=True)
+    parser = argparse.ArgumentParser(
+        description="'ceph mds stat' nagios plugin.")
+    parser.add_argument('-e', '--exe', help='ceph executable [%s]' % CEPH_EXEC)
+    parser.add_argument('-c', '--conf', help='alternative ceph conf file')
+    parser.add_argument(
+        '-m', '--monaddress',
+        help='ceph monitor to use for queries (address[:port])')
+    parser.add_argument('-i', '--id', help='ceph client id')
+    parser.add_argument('-k', '--keyring', help='ceph client keyring file')
+    parser.add_argument('-V', '--version',
+                        help='show version and exit', action='store_true')
+    parser.add_argument('-n', '--name', help='mds daemon name', required=True)
+    parser.add_argument('-f', '--filesystem', help='mds filesystem name',
+                        required=True)
     args = parser.parse_args()
 
     if args.version:
@@ -86,7 +91,9 @@ def main():
     ceph_cmd.extend(CEPH_COMMAND.split(' '))
 
     # exec command
-    p = subprocess.Popen(ceph_cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    p = subprocess.Popen(ceph_cmd,
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE)
     output, err = p.communicate()
 
     if p.returncode != 0 or not output:
@@ -98,10 +105,12 @@ def main():
     try:
         mds_stat = json.loads(output)
     except Exception as e:
-        print("MDS ERROR: could not parse '%s' output: %s: %s" % (CEPH_COMMAND,output,e))
+        print("MDS ERROR: could not parse '%s' output: %s: %s" %
+              (CEPH_COMMAND, output, e))
         return STATUS_UNKNOWN
 
     return check_target_mds(mds_stat, args.filesystem, args.name)
+
 
 def check_target_mds(mds_stat, fs_name, name):
     # find mds from standby list
@@ -130,15 +139,17 @@ def check_target_mds(mds_stat, fs_name, name):
         print("MDS ERROR: FS '%s' is not found in fsmap" % (fs_name))
         return STATUS_ERROR
 
+
 def _get_standby_mds(mds_stat):
     mds_array = []
     for mds in mds_stat['fsmap']['standbys']:
         name = mds['name']
         state = mds['state']
-        laggy_since = mds['laggy_since'] if 'laggy_since' in mds else None
+        # laggy_since = mds['laggy_since'] if 'laggy_since' in mds else None
         mds_array.append(MDS(name, state))
 
     return mds_array
+
 
 def _get_active_mds(mds_stat, fs_name):
     mds_fs = mds_stat['fsmap']['filesystems']
@@ -154,13 +165,15 @@ def _get_active_mds(mds_stat, fs_name):
         for gid in infos:
             name = infos[gid]['name']
             state = infos[gid]['state']
-            laggy_since = infos[gid]['laggy_since'] if 'laggy_since' in infos[gid] else None
+            laggy_since = infos[gid]['laggy_since'] \
+                if 'laggy_since' in infos[gid] else None
             mds_array.append(MDS(name, state, laggy_since))
 
         return mds_array
 
     # no fs found
     return None
+
 
 class MDS(object):
     def __init__(self, name, state, laggy_since=None):
@@ -183,6 +196,7 @@ class MDS(object):
             msg += " (laggy or crashed)"
         return msg
 
+
 # main
 if __name__ == "__main__":
-  sys.exit(main())
+    sys.exit(main())
